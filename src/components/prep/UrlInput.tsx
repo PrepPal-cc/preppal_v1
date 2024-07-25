@@ -6,7 +6,7 @@ const UrlInput: React.FC = () => {
   return (
     <div className="mb-6 lg:mb-8">
       <label className="block text-lg lg:text-xl font-medium text-gray-700 mb-2 lg:mb-3">
-                Company's Website URL
+                Company&apos;s Website URL
             </label>
       <input
         type="text"

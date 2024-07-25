@@ -17,7 +17,7 @@ export default function Home() {
               </h1>
               <p className="text-base md:text-lg text-[#505F98] mb-6">
                 Preparing for meetings by thoroughly researching and understanding the
-                backgrounds, interests, and goals of those you'll meet helps build rapport and
+                backgrounds, interests, and goals of those you&apos;ll meet helps build rapport and
                 demonstrate professionalism. Effective preparation shows commitment to
                 creating mutually beneficial relationships, increasing success in business endeavors.
               </p>

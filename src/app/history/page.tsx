@@ -29,26 +29,26 @@ const HistoryPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        if (!user.token) {
-          throw new Error('No authentication token available');
-        }
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/history`, {
-          headers: {
-            'Authorization': `Bearer ${user.token}`
+          if (!user || !user.token) {
+              throw new Error('No authentication token available');
           }
-        });
-        if (!response.ok) {
-          throw new Error('Failed to fetch history');
-        }
-        const data = await response.json();
-        setHistory(data);
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/history?userId=${user.email}`, {
+              headers: {
+                  'Authorization': `Bearer ${user.token}`
+              }
+          });
+          if (!response.ok) {
+              throw new Error('Failed to fetch history');
+          }
+          const data = await response.json();
+          setHistory(data);
       } catch (err) {
-        setError('An error occurred while fetching your history');
-        console.error(err);
+          console.error('Error fetching history:', err);
+          setError('Failed to load history');
       } finally {
-        setIsLoading(false);
+          setIsLoading(false);
       }
-    };
+  };
 
     fetchHistory();
   }, [user, router]);
@@ -65,7 +65,7 @@ const HistoryPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Your Preparation History</h1>
       {history.length === 0 ? (
-        <p>You haven't prepared for any interviews yet.</p>
+        <p>You haven&apos;t prepared for any interviews yet.</p>
       ) : (
         <ul className="space-y-4">
           {history.map((item) => (
