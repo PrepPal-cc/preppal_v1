@@ -202,15 +202,19 @@ export class AwsInfraStack extends cdk.Stack {
 
     // S3 bucket for frontend hosting
     const websiteBucket = new s3.Bucket(this, 'WebsiteBucket', {
-      websiteIndexDocument: 'index.html',
-      websiteErrorDocument: '404.html',
-      publicReadAccess: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: cdk.RemovalPolicy.DESTROY, // Optional: for easy cleanup during development
+      autoDeleteObjects: true, // Optional: for easy cleanup during development
     });
 
-    // CloudFront distribution
+    const originAccessIdentity = new cloudfront.OriginAccessIdentity(this, 'OAI');
+    websiteBucket.grantRead(originAccessIdentity);
+
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
       defaultBehavior: {
-        origin: new origins.S3Origin(websiteBucket),
+        origin: new origins.S3Origin(websiteBucket, {
+          originAccessIdentity: originAccessIdentity
+        }),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
       },
       defaultRootObject: 'index.html',
@@ -234,8 +238,23 @@ export class AwsInfraStack extends cdk.Stack {
     // Update Cognito User Pool client settings
     const userPoolClient = userPool.addClient('PrepPalUserPoolClient', {
       oAuth: {
-        callbackUrls: [distribution.distributionDomainName],
-        logoutUrls: [distribution.distributionDomainName],
+        flows: {
+          authorizationCodeGrant: true,
+          implicitCodeGrant: true,
+        },
+        scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL, cognito.OAuthScope.PROFILE],
+        callbackUrls: [`https://${distribution.distributionDomainName}`],
+        logoutUrls: [`https://${distribution.distributionDomainName}`],
+      },
+      supportedIdentityProviders: [
+        cognito.UserPoolClientIdentityProvider.COGNITO
+      ],
+      generateSecret: false, // Set to true if you need a client secret
+      authFlows: {
+        adminUserPassword: true,
+        userPassword: true,
+        custom: true,
+        userSrp: true,
       },
     });
 
@@ -243,7 +262,7 @@ export class AwsInfraStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'UserPoolId', { value: userPool.userPoolId });
     new cdk.CfnOutput(this, 'UserPoolClientId', { value: userPoolClient.userPoolClientId });
     new cdk.CfnOutput(this, 'ApiUrl', { value: api.url });
-    new cdk.CfnOutput(this, 'CloudFrontURL', { value: distribution.distributionDomainName });
+    new cdk.CfnOutput(this, 'CloudFrontURL', { value: `https://${distribution.distributionDomainName}` });
 
     // Update environment variables
     const envFilePath = path.join(__dirname, '../../.env.production');
