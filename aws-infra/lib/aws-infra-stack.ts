@@ -13,6 +13,7 @@ import * as logs from 'aws-cdk-lib/aws-logs';
 import { Construct } from 'constructs';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as cr from 'aws-cdk-lib/custom-resources';
 
 interface AwsInfraStackProps extends cdk.StackProps {
   environment: string;
@@ -205,6 +206,7 @@ export class AwsInfraStack extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY, // Optional: for easy cleanup during development
       autoDeleteObjects: true, // Optional: for easy cleanup during development
+      
     });
 
     const originAccessIdentity = new cloudfront.OriginAccessIdentity(this, 'OAI');
@@ -227,8 +229,23 @@ export class AwsInfraStack extends cdk.Stack {
       ],
     });
 
-    // Deploy site contents to S3 bucket
-    new s3deploy.BucketDeployment(this, 'DeployWebsite', {
+    // Custom resource to trigger redeployment
+    new cr.AwsCustomResource(this, 'DeploymentTrigger', {
+      onUpdate: {
+        service: 'S3',
+        action: 'putObject',
+        parameters: {
+          Bucket: websiteBucket.bucketName,
+          Key: 'deploy-trigger.txt',
+          Body: new Date().toISOString()
+        },
+        physicalResourceId: cr.PhysicalResourceId.of(Date.now().toString())
+      },
+      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({resources: [websiteBucket.arnForObjects('*')]})
+    });
+
+    // S3 bucket deployment
+    new s3deploy.BucketDeployment(this, 'WebsiteDeployment', {
       sources: [s3deploy.Source.asset('../out')],
       destinationBucket: websiteBucket,
       distribution,
