@@ -7,7 +7,6 @@ type User = {
   email: string;
   firstName: string;
   token: string;
-  // Add any other user attributes you need
 };
 
 interface AuthContextType {
