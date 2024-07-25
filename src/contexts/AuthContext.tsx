@@ -6,6 +6,7 @@ import { signIn, signUp, signOut, getCurrentUser, verifyEmail } from '../lib/cog
 type User = {
   email: string;
   firstName: string;
+  token: string;
   // Add any other user attributes you need
 };
 
@@ -32,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser({
             email: userData.email,
             firstName: userData.firstName,
+            token: accessToken,
           });
           setIsEmailVerified(true);
         })
@@ -47,14 +49,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isEmailVerified,
     signIn: async (email, password) => {
       const result = await signIn(email, password);
-      if (result?.AccessToken) {
+      if (result && result.AccessToken) {
         localStorage.setItem('accessToken', result.AccessToken);
         const userData = await getCurrentUser(result.AccessToken);
         setUser({
           email: userData.email,
           firstName: userData.firstName,
+          token: result.AccessToken,
         });
         setIsEmailVerified(true);
+      } else {
+        throw new Error('Authentication failed');
       }
     },
     signUp: async (email, password, firstName) => {

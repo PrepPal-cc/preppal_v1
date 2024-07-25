@@ -39,7 +39,7 @@ import {
         PASSWORD: password,
       },
     });
-  
+
     try {
       const response = await cognitoClient.send(command);
       return response.AuthenticationResult;
