@@ -15,6 +15,7 @@ export default {
   stacks(app) {
     app.setDefaultFunctionProps({
       environment: { STAGE: stage },
+      logRetention: "one_week",
     });
     app.stack(Web, {
       stackName: `preppal-v1-web-${stage}`,
