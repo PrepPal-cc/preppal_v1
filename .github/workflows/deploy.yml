@@ -32,9 +32,6 @@ jobs:
       # - name: Run tests
       #   run: npm test
 
-      - name: Build
-        run: npm run build
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
