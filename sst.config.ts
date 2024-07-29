@@ -1,16 +1,23 @@
 import { SSTConfig } from "sst";
 import { Web } from "./stacks/Web";
 
+const stage = process.env.STAGE || 'dev';
+
 export default {
   config(_input) {
     return {
-      name: "preppal",
+      name: `preppal-v1-web`,
       region: "us-east-1",
-      profile: process.env.AWS_PROFILE
+      profile: `preppal-v1-web-${stage}`,
+      stage: `${stage}`
     };
   },
   stacks(app) {
-    app
-      .stack(Web);
+    app.setDefaultFunctionProps({
+      environment: { STAGE: stage },
+    });
+    app.stack(Web, {
+      stackName: `preppal-v1-web-${stage}`,
+    });
   },
 } satisfies SSTConfig;
