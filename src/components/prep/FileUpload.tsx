@@ -2,17 +2,23 @@
 
 import React from 'react';
 
-const FileUpload: React.FC = () => {
+interface FileUploadProps {
+    onChange: (file: File | null) => void;
+}
+
+const FileUpload: React.FC<FileUploadProps> = ({ onChange }) => {
     return (
-        <div className="mb-6 lg:mb-8">
-            <label className="block text-lg lg:text-xl font-medium text-gray-700 mb-2 lg:mb-3">
-                Upload Resume
+        <div>
+            <label htmlFor="resume" className="block text-sm font-medium text-gray-700">
+                Resume (PDF)
             </label>
             <input
                 type="file"
-                name="resume"
-                className="w-full px-4 py-3 lg:py-4 text-base lg:text-lg border border-gray-300 rounded-md"
+                id="resume"
                 accept=".pdf"
+                onChange={(e) => onChange(e.target.files?.[0] || null)}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />
         </div>
     );

@@ -1,8 +1,5 @@
-'use client'
-
 import React from 'react';
 import Link from 'next/link';
-import SignInButton from './SignInButton';
 
 const Header: React.FC = () => {
     return (
@@ -17,7 +14,6 @@ const Header: React.FC = () => {
                 <Link href="/prep" className="bg-blue-900 text-white px-4 py-2 md:px-6 md:py-3 lg:px-8 lg:py-4 xl:px-10 xl:py-5 rounded text-lg md:text-xl lg:text-2xl xl:text-3xl hover:bg-blue-800 transition duration-300">
                     Prep!
                 </Link>
-                <SignInButton />
             </div>
         </header>
     );
