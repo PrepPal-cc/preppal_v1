@@ -21,6 +21,7 @@ const PrepForm: React.FC<PrepFormProps> = ({ prepareInterview }) => {
         e.preventDefault();
         setIsLoading(true);
         setError(null);
+        setResponse(null);
 
         if (!file) {
             setError('Please upload a resume');
@@ -34,10 +35,18 @@ const PrepForm: React.FC<PrepFormProps> = ({ prepareInterview }) => {
 
         try {
             const result = await prepareInterview(formData);
-            setResponse(result.response);
+            if (result && result.response) {
+                setResponse(result.response);
+            } else {
+                throw new Error('Invalid response from server');
+            }
         } catch (err) {
-            setError('An error occurred while preparing your interview');
-            console.error(err);
+            console.error('Error in prepareInterview:', err);
+            if (err instanceof Error) {
+                setError(`An error occurred: ${err.message}`);
+            } else {
+                setError('An unexpected error occurred while preparing your interview');
+            }
         } finally {
             setIsLoading(false);
         }
