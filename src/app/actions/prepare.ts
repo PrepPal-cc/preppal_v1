@@ -1,11 +1,11 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { remark } from 'remark'
+import { Config } from "sst/node/config"
 import OpenAI from 'openai'
 import pdf from 'pdf-parse'
-import { remark } from 'remark'
 import html from 'remark-html'
-import { Config } from "sst/node/config";
 
 const openai = new OpenAI({
   apiKey: (Config as any).OPENAI_API_KEY
