@@ -5,9 +5,10 @@ import OpenAI from 'openai'
 import pdf from 'pdf-parse'
 import { remark } from 'remark'
 import html from 'remark-html'
+import { Config } from "sst/node/config";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: (Config as any).OPENAI_API_KEY
 })
 
 async function markdownToHtml(markdown: string) {
