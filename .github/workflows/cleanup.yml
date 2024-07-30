@@ -1,4 +1,4 @@
-name: Cleanup Resources
+name: Cleanup AWS Resources
 
 on:
   workflow_dispatch:
