@@ -1,0 +1,65 @@
+name: Cleanup AWS Resources
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Stage to cleanup (dev, staging, or prod)'
+        required: true
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      confirmation:
+        description: 'Type "YES" to confirm resource removal'
+        required: true
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirmation == 'YES'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Remove SST resources
+        run: |
+          if [[ "${{ github.event.inputs.stage }}" == "dev" ]]; then
+            npx sst remove --stage v1-web-dev
+          elif [[ "${{ github.event.inputs.stage }}" == "staging" ]]; then
+            npx sst remove --stage v1-web-staging
+          elif [[ "${{ github.event.inputs.stage }}" == "prod" ]]; then
+            npx sst remove --stage v1-web-prod
+          else
+            echo "Invalid stage specified"
+            exit 1
+          fi
+
+      - name: Verify removal
+        run: |
+          echo "Verifying removal of resources for ${{ github.event.inputs.stage }} stage..."
+          # Add any additional verification steps here
+          # For example, you could use AWS CLI commands to check if certain resources still exist
