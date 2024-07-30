@@ -1,9 +1,19 @@
-name: Cleanup Dev Resources
+name: Cleanup Resources
 
 on:
-  push:
-    branches:
-      - dev
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Stage to cleanup (dev, staging, or prod)'
+        required: true
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+      confirmation:
+        description: 'Type "YES" to confirm resource removal'
+        required: true
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -16,6 +26,7 @@ permissions:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    if: github.event.inputs.confirmation == 'YES'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -35,10 +46,20 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Remove SST resources
-        run: npx sst remove --stage dev
+        run: |
+          if [[ "${{ github.event.inputs.stage }}" == "dev" ]]; then
+            npx sst remove --stage v1-web-dev
+          elif [[ "${{ github.event.inputs.stage }}" == "staging" ]]; then
+            npx sst remove --stage v1-web-staging
+          elif [[ "${{ github.event.inputs.stage }}" == "prod" ]]; then
+            npx sst remove --stage v1-web-prod
+          else
+            echo "Invalid stage specified"
+            exit 1
+          fi
 
       - name: Verify removal
         run: |
-          echo "Verifying removal of resources..."
+          echo "Verifying removal of resources for ${{ github.event.inputs.stage }} stage..."
           # Add any additional verification steps here
           # For example, you could use AWS CLI commands to check if certain resources still exist
