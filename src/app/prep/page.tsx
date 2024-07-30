@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from '@/components/common/Header';
 import PrepForm from '@/components/prep/PrepForm';
+import { prepareInterview } from '@/app/actions/prepare';
 
 const PrepPage = () => {
     return (
@@ -12,7 +13,7 @@ const PrepPage = () => {
                     Please upload your resume as a .pdf file and provide the company&apos;s website URL.
                 </p>
                 <div className="max-w-2xl lg:max-w-3xl mx-auto">
-                    <PrepForm />
+                    <PrepForm prepareInterview={prepareInterview} />
                 </div>
             </main>
         </div>

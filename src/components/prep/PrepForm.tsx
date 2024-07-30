@@ -2,12 +2,15 @@
 
 import React, { useState } from 'react';
 
-import { prepareInterview } from '@/app/actions/prepare';
 import CompanyNameInput from '@/components/prep/CompanyNameInput';
 import FileUpload from '@/components/prep/FileUpload';
 import SubmitButton from '@/components/prep/SubmitButton';
 
-const PrepForm = () => {
+interface PrepFormProps {
+    prepareInterview: (formData: FormData) => Promise<{ response: string }>;
+}
+
+const PrepForm: React.FC<PrepFormProps> = ({ prepareInterview }) => {
     const [companyName, setCompanyName] = useState('');
     const [file, setFile] = useState<File | null>(null);
     const [response, setResponse] = useState<string | null>(null);
