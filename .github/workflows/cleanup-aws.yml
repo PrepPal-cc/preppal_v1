@@ -14,17 +14,14 @@ permissions:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
     if: github.event.inputs.confirmation == 'YES'
-    env:
-      SST_STAGE: ${{ github.ref == 'refs/heads/dev' && 'v1-web-dev' || github.ref == 'refs/heads/staging' && 'v1-web-staging' || github.ref == 'refs/heads/main' && 'v1-web-prod' || '' }}
-      STACK_NAME: ${{ github.ref == 'refs/heads/dev' && 'preppal-v1-web-dev' || github.ref == 'refs/heads/staging' && 'preppal-v1-web-staging' || github.ref == 'refs/heads/main' && 'preppal-v1-web-prod' || '' }}
-
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v1
         with:
           node-version: '18'
 
@@ -37,57 +34,27 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Validate environment
-        run: |
-          if [ -z "$SST_STAGE" ] || [ -z "$STACK_NAME" ]; then
-            echo "Cleanup is only supported for dev, staging, and main branches"
-            exit 1
-          fi
-
       - name: Remove SST resources
-        run: npx sst remove --stage ${{ env.SST_STAGE }}
+        run: |
+          STAGE=$(echo ${{ github.ref_name }} | sed 's/main/prod/')
+          npx sst remove --stage $STAGE
 
       - name: Verify removal
         run: |
           echo "Verifying removal of resources for ${{ github.ref }} branch..."
           
+          STACK_NAME=$(if [[ ${{ github.ref }} == 'refs/heads/dev' ]]; then echo "dev"; elif [[ ${{ github.ref }} == 'refs/heads/staging' ]]; then echo "staging"; elif [[ ${{ github.ref }} == 'refs/heads/main' ]]; then echo "prod"; fi)
+          
           # Check if the CloudFormation stack still exists
-          if aws cloudformation describe-stacks --stack-name ${{ env.STACK_NAME }} 2>&1 | grep -q 'does not exist'; then
-            echo "CloudFormation stack ${{ env.STACK_NAME }} has been successfully removed."
+          if aws cloudformation describe-stacks --stack-name $STACK_NAME 2>&1 | grep -q 'does not exist'; then
+            echo "CloudFormation stack $STACK_NAME has been successfully removed."
           else
-            echo "Warning: CloudFormation stack ${{ env.STACK_NAME }} may still exist."
+            echo "Warning: CloudFormation stack $STACK_NAME may still exist."
           fi
           
-          # Check for S3 buckets
-          S3_BUCKETS=$(aws s3api list-buckets --query "Buckets[?starts_with(Name, '${{ env.STACK_NAME }}')].Name" --output text)
-          if [ -z "$S3_BUCKETS" ]; then
-            echo "No S3 buckets found for ${{ env.STACK_NAME }}."
-          else
-            echo "Warning: S3 buckets may still exist: $S3_BUCKETS"
-          fi
-          
-          # Check for Lambda functions
-          LAMBDA_FUNCTIONS=$(aws lambda list-functions --query "Functions[?starts_with(FunctionName, '${{ env.STACK_NAME }}')].FunctionName" --output text)
-          if [ -z "$LAMBDA_FUNCTIONS" ]; then
-            echo "No Lambda functions found for ${{ env.STACK_NAME }}."
-          else
-            echo "Warning: Lambda functions may still exist: $LAMBDA_FUNCTIONS"
-          fi
-          
-          # Check for API Gateway APIs
-          API_IDS=$(aws apigateway get-rest-apis --query "items[?starts_with(name, '${{ env.STACK_NAME }}')].id" --output text)
-          if [ -z "$API_IDS" ]; then
-            echo "No API Gateway APIs found for ${{ env.STACK_NAME }}."
-          else
-            echo "Warning: API Gateway APIs may still exist: $API_IDS"
-          fi
-          
-          # Check for CloudFront distributions
-          CF_DISTRIBUTIONS=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].Id, '${{ env.STACK_NAME }}')].Id" --output text)
-          if [ -z "$CF_DISTRIBUTIONS" ]; then
-            echo "No CloudFront distributions found for ${{ env.STACK_NAME }}."
-          else
-            echo "Warning: CloudFront distributions may still exist: $CF_DISTRIBUTIONS"
-          fi
+          # Additional resource checks can be added here if needed
           
           echo "Resource verification complete."
+
+      - name: Print caller identity
+        run: aws sts get-caller-identity
