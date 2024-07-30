@@ -19,7 +19,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
-    if: github.event.inputs.confirmation == 'YES' && github.event_name == 'workflow_dispatch'
+    if: github.event.inputs.confirmation == 'YES' || github.event_name != 'workflow_dispatch'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v1
