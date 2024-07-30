@@ -5,6 +5,11 @@ on:
     branches: [dev, staging, main]
   pull_request:
     branches: [dev, staging, main]
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type "YES" to confirm resource deployment'
+        required: true
 
 permissions:
   id-token: write
@@ -14,6 +19,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
+    if: github.event.inputs.confirmation == 'YES'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v1
