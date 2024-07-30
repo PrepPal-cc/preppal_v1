@@ -7,9 +7,16 @@ import OpenAI from 'openai'
 import pdf from 'pdf-parse'
 import html from 'remark-html'
 
-const openai = new OpenAI({
-  apiKey: (Config as any).OPENAI_API_KEY
-})
+let openai: OpenAI;
+
+function getOpenAI() {
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: (Config as any).OPENAI_API_KEY
+    });
+  }
+  return openai;
+}
 
 async function markdownToHtml(markdown: string) {
   const result = await remark().use(html).process(markdown)
@@ -42,7 +49,8 @@ ${resumeText}
 
 Please provide a structured guide with talking points and potential questions for each section of the agenda. Focus on the company's known products, services, and technologies, as well as how my skills from the resume might be relevant.`
 
-    const completion = await openai.chat.completions.create({
+    const openaiInstance = getOpenAI();
+    const completion = await openaiInstance.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemMessage },
